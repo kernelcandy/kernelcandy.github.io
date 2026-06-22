@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Snake Game</title>
+    <title>Simple Snake Game with reCAPTCHA</title>
+    <!-- Load Google's official reCAPTCHA library -->
+    <script src="https://google.com" async defer></script>
     <style>
         body {
             background-color: #222;
@@ -17,17 +19,61 @@
             display: block;
             margin: 20px auto;
         }
+        /* Style for the Google Verification Screen */
+        #captcha-container {
+            background-color: #333;
+            border: 2px solid #555;
+            border-radius: 8px;
+            width: 350px;
+            margin: 100px auto;
+            padding: 30px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Hide the game by default until verified */
+        #game-container {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🐍 Classic Snake Game</h1>
-    <h2>Score: <span id="scoreText">0</span></h2>
-    <p>Use your keyboard arrow keys to move!</p>
+    <!-- 1. OFFICIAL GOOGLE RECAPTCHA SCREEN -->
+    <div id="captcha-container">
+        <h2>Security Check</h2>
+        <p style="font-size: 14px; color: #aaa; margin-bottom: 20px;">Please verify you are human to play.</p>
+        
+        <!-- Google reCAPTCHA Checkbox Box -->
+        <div class="g-recaptcha" 
+             data-sitekey="6LdJ_SwtAAAAAKscSu33YVFD9RY5FhjMHKDNKHlv" 
+             data-callback="verifyHuman">
+        </div>
+    </div>
 
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <!-- 2. THE ACTUAL GAME (HIDDEN AT START) -->
+    <div id="game-container">
+        <h1>🐍 Classic Snake Game</h1>
+        <h2>Score: <span id="scoreText">0</span></h2>
+        <p>Use your keyboard arrow keys to move!</p>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+    </div>
 
     <script>
+        // Google calls this function automatically when the checkmark turns green
+        function verifyHuman(responseToken) {
+            if (responseToken.length !== 0) {
+                // Hide the security screen and show the game
+                setTimeout(() => {
+                    document.getElementById("captcha-container").style.display = "none";
+                    document.getElementById("game-container").style.display = "block";
+                    startGame(); // Fire up the game engine
+                }, 600);
+            }
+        }
+
+        // Core Game Logic
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const grid = 20;
@@ -35,10 +81,8 @@
         let score = 0;
 
         let snake = {
-            x: 160,
-            y: 160,
-            dx: grid,
-            dy: 0,
+            x: 160, y: 160,
+            dx: grid, dy: 0,
             cells: [{x: 160, y: 160}],
             maxCells: 4
         };
@@ -52,12 +96,10 @@
         function resetGame() {
             score = 0;
             document.getElementById("scoreText").innerText = score;
-            snake.x = 160;
-            snake.y = 160;
+            snake.x = 160; snake.y = 160;
             snake.cells = [{x: 160, y: 160}];
             snake.maxCells = 4;
-            snake.dx = grid;
-            snake.dy = 0;
+            snake.dx = grid; snake.dy = 0;
             food.x = getRandomInt(0, 20) * grid;
             food.y = getRandomInt(0, 20) * grid;
         }
@@ -65,38 +107,28 @@
         function loop() {
             requestAnimationFrame(loop);
 
-            // This slows down the game loop (6 frames per second)
-            if (++count < 6) {
-                return;
-            }
+            if (++count < 6) { return; }
             count = 0;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             snake.x += snake.dx;
             snake.y += snake.dy;
 
-            // Wall collisions (Game Over)
             if (snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height) {
                 alert("Game Over! Your score: " + score);
                 resetGame();
             }
 
             snake.cells.unshift({x: snake.x, y: snake.y});
+            if (snake.cells.length > snake.maxCells) { snake.cells.pop(); }
 
-            if (snake.cells.length > snake.maxCells) {
-                snake.cells.pop();
-            }
-
-            // Draw Red Food
             ctx.fillStyle = 'red';
             ctx.fillRect(food.x, food.y, grid - 1, grid - 1);
 
-            // Draw Green Snake
             ctx.fillStyle = 'green';
             snake.cells.forEach(function(cell, index) {
                 ctx.fillRect(cell.x, cell.y, grid - 1, grid - 1);  
                 
-                // Eat food logic
                 if (cell.x === food.x && cell.y === food.y) {
                     snake.maxCells++;
                     score += 10;
@@ -105,7 +137,6 @@
                     food.y = getRandomInt(0, 20) * grid;
                 }
                 
-                // Self collision check (Game Over)
                 for (let i = index + 1; i < snake.cells.length; i++) {
                     if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
                         alert("Game Over! Your score: " + score);
@@ -115,32 +146,16 @@
             });
         }
 
-        // Keyboard Arrow Key Listeners
         document.addEventListener('keydown', function(e) {
-            // Left arrow
-            if (e.which === 37 && snake.dx === 0) {
-                snake.dx = -grid;
-                snake.dy = 0;
-            }
-            // Up arrow
-            else if (e.which === 38 && snake.dy === 0) {
-                snake.dy = -grid;
-                snake.dx = 0;
-            }
-            // Right arrow
-            else if (e.which === 39 && snake.dx === 0) {
-                snake.dx = grid;
-                snake.dy = 0;
-            }
-            // Down arrow
-            else if (e.which === 40 && snake.dy === 0) {
-                snake.dy = grid;
-                snake.dx = 0;
-            }
+            if (e.which === 37 && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
+            else if (e.which === 38 && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
+            else if (e.which === 39 && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
+            else if (e.which === 40 && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
         });
 
-        // Start the game loop
-        requestAnimationFrame(loop);
+        function startGame() {
+            requestAnimationFrame(loop);
+        }
     </script>
 </body>
 </html>
