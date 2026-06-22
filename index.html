@@ -1,36 +1,61 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Snake Game with reCAPTCHA</title>
-    <!-- Load Google's official reCAPTCHA library -->
+    <title>⚡ Neon Arcade Snake ⚡</title>
+    <!-- Official Google reCAPTCHA Library -->
     <script src="https://google.com" async defer></script>
     <style>
         body {
-            background-color: #222;
-            color: white;
-            font-family: sans-serif;
+            background-color: #0d0e15;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
             text-align: center;
+            margin: 0;
+            padding: 20px;
         }
+        h1 {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            font-size: 36px;
+            margin-bottom: 5px;
+        }
+        h2 {
+            color: #ff007f;
+            text-shadow: 0 0 10px #ff007f;
+            margin-top: 5px;
+        }
+        /* Arcade Style Canvas */
         canvas {
-            border: 4px solid white;
-            background-color: black;
+            border: 4px solid #00ffcc;
+            background-color: #050508;
             display: block;
             margin: 20px auto;
+            box-shadow: 0 0 20px #00ffcc, inset 0 0 15px rgba(0, 255, 204, 0.3);
+            border-radius: 10px;
         }
-        /* Style for the Google Verification Screen */
+        /* Neon Security Box styling */
         #captcha-container {
-            background-color: #333;
-            border: 2px solid #555;
-            border-radius: 8px;
-            width: 350px;
+            background-color: #161925;
+            border: 3px solid #ff007f;
+            border-radius: 12px;
+            width: 360px;
             margin: 100px auto;
             padding: 30px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0px 0px 25px #ff007f;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+        #captcha-container h2 {
+            color: #ff007f;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #8fa0dd;
+            font-size: 14px;
         }
         /* Hide the game by default until verified */
         #game-container {
@@ -40,40 +65,39 @@
 </head>
 <body>
 
-    <!-- 1. OFFICIAL GOOGLE RECAPTCHA SCREEN -->
+    <!-- 1. NEON GOOGLE RECAPTCHA SCREEN -->
     <div id="captcha-container">
-        <h2>Security Check</h2>
-        <p style="font-size: 14px; color: #aaa; margin-bottom: 20px;">Please verify you are human to play.</p>
+        <h2>⚡ SECURITY CHECK ⚡</h2>
+        <p>Verify you are human to power up the machine.</p>
         
-        <!-- Google reCAPTCHA Checkbox Box -->
+        <!-- Google Checkbox with your live site key -->
         <div class="g-recaptcha" 
              data-sitekey="6LdJ_SwtAAAAAKscSu33YVFD9RY5FhjMHKDNKHlv" 
              data-callback="verifyHuman">
         </div>
     </div>
 
-    <!-- 2. THE ACTUAL GAME (HIDDEN AT START) -->
+    <!-- 2. THE UPGRADED GAME VIEW -->
     <div id="game-container">
-        <h1>🐍 Classic Snake Game</h1>
-        <h2>Score: <span id="scoreText">0</span></h2>
-        <p>Use your keyboard arrow keys to move!</p>
+        <h1>🎮 NEON ARCADE SNAKE 🎮</h1>
+        <h2>SCORE: <span id="scoreText">0</span></h2>
+        <p>Use your keyboard ARROW KEYS to survive!</p>
         <canvas id="gameCanvas" width="400" height="400"></canvas>
     </div>
 
     <script>
-        // Google calls this function automatically when the checkmark turns green
+        // Triggered automatically by Google when checkmark turns green
         function verifyHuman(responseToken) {
             if (responseToken.length !== 0) {
-                // Hide the security screen and show the game
                 setTimeout(() => {
                     document.getElementById("captcha-container").style.display = "none";
                     document.getElementById("game-container").style.display = "block";
-                    startGame(); // Fire up the game engine
-                }, 600);
+                    startGame(); 
+                }, 400);
             }
         }
 
-        // Core Game Logic
+        // Game Engine Logic
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const grid = 20;
@@ -107,6 +131,7 @@
         function loop() {
             requestAnimationFrame(loop);
 
+            // Game speed controller
             if (++count < 6) { return; }
             count = 0;
 
@@ -114,21 +139,30 @@
             snake.x += snake.dx;
             snake.y += snake.dy;
 
+            // Border hit collision
             if (snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height) {
-                alert("Game Over! Your score: " + score);
+                alert("⚡ GAME OVER ⚡\nFINAL SCORE: " + score);
                 resetGame();
             }
 
             snake.cells.unshift({x: snake.x, y: snake.y});
             if (snake.cells.length > snake.maxCells) { snake.cells.pop(); }
 
-            ctx.fillStyle = 'red';
-            ctx.fillRect(food.x, food.y, grid - 1, grid - 1);
+            // Draw Glowing Food (Red Neon)
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0055';
+            ctx.fillRect(food.x + 1, food.y + 1, grid - 2, grid - 2);
 
-            ctx.fillStyle = 'green';
+            // Draw Glowing Snake (Cyan / Green Neon)
+            ctx.shadowColor = '#00ffcc';
             snake.cells.forEach(function(cell, index) {
-                ctx.fillRect(cell.x, cell.y, grid - 1, grid - 1);  
+                // Head is brighter cyan, body elements are slightly dimmer
+                ctx.fillStyle = index === 0 ? '#ffffff' : '#00ffcc';
+                ctx.shadowBlur = index === 0 ? 15 : 8;
+                ctx.fillRect(cell.x + 1, cell.y + 1, grid - 2, grid - 2);  
                 
+                // Collect food event
                 if (cell.x === food.x && cell.y === food.y) {
                     snake.maxCells++;
                     score += 10;
@@ -137,13 +171,17 @@
                     food.y = getRandomInt(0, 20) * grid;
                 }
                 
+                // Self crash check
                 for (let i = index + 1; i < snake.cells.length; i++) {
                     if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
-                        alert("Game Over! Your score: " + score);
+                        alert("⚡ GAME OVER ⚡\nFINAL SCORE: " + score);
                         resetGame();
                     }
                 }
             });
+            
+            // Reset shadows back to normal for performance stability
+            ctx.shadowBlur = 0;
         }
 
         document.addEventListener('keydown', function(e) {
