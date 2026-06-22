@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +32,6 @@
             box-shadow: 0 0 20px #00ffcc, inset 0 0 15px rgba(0, 255, 204, 0.3);
             border-radius: 10px;
         }
-        /* Neon Security Box styling */
         #captcha-container {
             background-color: #161925;
             border: 3px solid #ff007f;
@@ -46,15 +44,8 @@
             flex-direction: column;
             align-items: center;
         }
-        #captcha-container h2 {
-            color: #ff007f;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #8fa0dd;
-            font-size: 14px;
-        }
-        /* Arcade Input styling */
+        #captcha-container h2 { color: #ff007f; margin-bottom: 10px; }
+        p { color: #8fa0dd; font-size: 14px; }
         .arcade-input {
             background: #050508;
             border: 2px solid #00ffcc;
@@ -66,7 +57,6 @@
             border-radius: 5px;
             width: 120px;
             margin-top: 15px;
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
         }
         .arcade-btn {
             background: #ff007f;
@@ -81,36 +71,23 @@
             cursor: pointer;
             box-shadow: 0 0 10px #ff007f;
         }
-        .arcade-btn:hover {
-            background: #ff3399;
-        }
-        #error-msg {
-            color: #ff3333;
-            font-weight: bold;
-            margin-top: 10px;
-            height: 20px;
-        }
-        #game-container {
-            display: none;
-        }
+        #error-msg { color: #ff3333; font-weight: bold; margin-top: 10px; height: 20px; }
+        #game-container { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- 1. CUSTOM NEON SECURITY SCREEN -->
+    <!-- SECURITY GATE -->
     <div id="captcha-container">
         <h2>⚡ SECURITY CHECK ⚡</h2>
-        <p>Solve this arcade code to prove you are human:</p>
-        
-        <!-- Generates random numbers dynamically -->
+        <p>Solve this code to enter the arcade:</p>
         <h3 id="math-question" style="font-size: 28px; color: #00ffcc; margin: 10px 0;"></h3>
-        
         <input type="number" id="user-answer" class="arcade-input" placeholder="??">
         <button onclick="checkAnswer()" class="arcade-btn">VERIFY HUMAN</button>
         <div id="error-msg"></div>
     </div>
 
-    <!-- 2. THE GAME VIEW -->
+    <!-- GAME ENGINE VIEW -->
     <div id="game-container">
         <h1>🎮 NEON ARCADE SNAKE 🎮</h1>
         <h2>SCORE: <span id="scoreText">0</span></h2>
@@ -119,26 +96,20 @@
     </div>
 
     <script>
-        // Generate random math challenge
+        // Math Gate Setup
         let num1 = Math.floor(Math.random() * 10) + 1;
         let num2 = Math.floor(Math.random() * 10) + 1;
         let correctAnswer = num1 + num2;
-        
         document.getElementById("math-question").innerText = `${num1} + ${num2} = ?`;
 
         function checkAnswer() {
             let userAnswer = parseInt(document.getElementById("user-answer").value);
-            let errorElement = document.getElementById("error-msg");
-            
             if (userAnswer === correctAnswer) {
-                errorElement.innerText = "";
                 document.getElementById("captcha-container").style.display = "none";
                 document.getElementById("game-container").style.display = "block";
                 startGame(); 
             } else {
-                errorElement.innerText = "❌ ACCESS DENIED. TRY AGAIN.";
-                document.getElementById("user-answer").value = "";
-                // Give a new problem on failure
+                document.getElementById("error-msg").innerText = "❌ ACCESS DENIED.";
                 num1 = Math.floor(Math.random() * 10) + 1;
                 num2 = Math.floor(Math.random() * 10) + 1;
                 correctAnswer = num1 + num2;
@@ -146,38 +117,33 @@
             }
         }
 
-        // Game Engine Logic
+        // Core Game Variables
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const grid = 20;
         let count = 0;
         let score = 0;
+        let isCheater = false;
 
-        let snake = {
-            x: 160, y: 160,
-            dx: grid, dy: 0,
-            cells: [{x: 160, y: 160}],
-            maxCells: 4
-        };
+        // ANTI-CHEAT: Tracks how fast keys are pressed
+        let lastKeyPressTime = 0;
 
+        let snake = { x: 160, y: 160, dx: grid, dy: 0, cells: [{x: 160, y: 160}], maxCells: 4 };
         let food = { x: 320, y: 320 };
 
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min)) + min;
-        }
+        function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
 
         function resetGame() {
             score = 0;
             document.getElementById("scoreText").innerText = score;
-            snake.x = 160; snake.y = 160;
-            snake.cells = [{x: 160, y: 160}];
-            snake.maxCells = 4;
+            snake.x = 160; snake.y = 160; snake.cells = [{x: 160, y: 160}]; snake.maxCells = 4;
             snake.dx = grid; snake.dy = 0;
-            food.x = getRandomInt(0, 20) * grid;
-            food.y = getRandomInt(0, 20) * grid;
+            food.x = getRandomInt(0, 20) * grid; food.y = getRandomInt(0, 20) * grid;
         }
 
         function loop() {
+            if (isCheater) return; // Completely stops rendering the game for cheaters
+            
             requestAnimationFrame(loop);
 
             if (++count < 6) { return; }
@@ -195,13 +161,11 @@
             snake.cells.unshift({x: snake.x, y: snake.y});
             if (snake.cells.length > snake.maxCells) { snake.cells.pop(); }
 
-            // Glowing Food
-            ctx.fillStyle = '#ff0055';
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#ff0055';
+            // Draw Food
+            ctx.fillStyle = '#ff0055'; ctx.shadowBlur = 10; ctx.shadowColor = '#ff0055';
             ctx.fillRect(food.x + 1, food.y + 1, grid - 2, grid - 2);
 
-            // Glowing Snake
+            // Draw Snake
             ctx.shadowColor = '#00ffcc';
             snake.cells.forEach(function(cell, index) {
                 ctx.fillStyle = index === 0 ? '#ffffff' : '#00ffcc';
@@ -223,20 +187,33 @@
                     }
                 }
             });
-            
             ctx.shadowBlur = 0;
         }
 
+        // Smart Input Listener (Catches Fast Gaming Bots)
         document.addEventListener('keydown', function(e) {
+            let currentTime = Date.now();
+            let timeDifference = currentTime - lastKeyPressTime;
+
+            // CRITICAL ANTI-CHEAT DETECTION RULE:
+            // Humans cannot physically click separate arrow keys faster than 50ms apart.
+            // If a script triggers moves instantly (0ms to 40ms), it's a software bot!
+            if (timeDifference < 45 && lastKeyPressTime !== 0) {
+                isCheater = true;
+                alert("🤖 BOT DETECTED 🤖\nAnomalous reaction time registered. System locked.");
+                location.reload(); // Re-locks the entire website instantly
+                return;
+            }
+            
+            lastKeyPressTime = currentTime;
+
             if (e.which === 37 && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
             else if (e.which === 38 && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
             else if (e.which === 39 && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
             else if (e.which === 40 && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
         });
 
-        function startGame() {
-            requestAnimationFrame(loop);
-        }
+        function startGame() { requestAnimationFrame(loop); }
     </script>
 </body>
 </html>
